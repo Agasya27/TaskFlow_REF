@@ -7,22 +7,28 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from '@theme/index';
+import { useTheme, useThemeMode } from '@theme/index';
 import { Avatar } from '@components/ui/Avatar';
 import { Button } from '@components/ui/Button';
+import { AppWordmark } from '@components/ui/AppWordmark';
 import { useAuthStore } from '@store/authStore';
 import { useTaskStore } from '@store/taskStore';
+import { useNotificationStore } from '@store/notificationStore';
+import { useToast } from '@components/ui/Toast';
 
 export const ProfileScreen: React.FC = () => {
-  const { colors, fonts, spacing, radius, shadows } = useTheme();
+  const { colors, fonts, spacing, radius, shadows, gradients } = useTheme();
+  const { isDark, toggleTheme } = useThemeMode();
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuthStore();
   const tasks = useTaskStore((s) => s.tasks);
+  const { enabled: notificationsOn, isHydrated, isUpdating, setEnabled } = useNotificationStore();
+  const { show: showToast } = useToast();
 
-  const [notificationsOn, setNotificationsOn] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const totalTasks = tasks.length;
@@ -31,6 +37,17 @@ export const ProfileScreen: React.FC = () => {
 
   const handleLogout = async () => {
     await logout();
+  };
+
+  const handleNotificationsToggle = async (next: boolean) => {
+    const pendingCount = tasks.filter((task) => !task.completed).length;
+    const result = await setEnabled(next, pendingCount);
+
+    if (!result.ok && result.message) {
+      showToast(result.message, 'error');
+    } else if (result.ok && next) {
+      showToast('Notifications enabled', 'success');
+    }
   };
 
   const stats = [
@@ -43,72 +60,58 @@ export const ProfileScreen: React.FC = () => {
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}
+      showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: insets.top + spacing.xl,
-            backgroundColor: colors.surface,
-            borderBottomColor: colors.divider,
-          },
-        ]}
-      >
-        <Avatar name={user?.name ?? 'User'} size={80} />
-        <Text
-          style={[
-            styles.name,
-            { color: colors.textPrimary, fontFamily: fonts.heading },
-          ]}
+      {isDark ? (
+        <View style={[styles.hero, { paddingTop: insets.top + spacing.lg, backgroundColor: colors.surface }]}>
+          <AppWordmark size="lg" />
+          <Avatar name={user?.name ?? 'User'} size={84} />
+          <Text style={[styles.name, { color: colors.textPrimary, fontFamily: fonts.heading }]}>
+            {user?.name ?? 'User'}
+          </Text>
+          <Text style={[styles.email, { color: colors.textSecondary, fontFamily: fonts.body }]}>
+            {user?.email ?? ''}
+          </Text>
+        </View>
+      ) : (
+        <LinearGradient
+          colors={[...gradients.primarySoft]}
+          style={[styles.hero, { paddingTop: insets.top + spacing.lg }]}
         >
-          {user?.name ?? 'User'}
-        </Text>
-        <Text
-          style={[
-            styles.email,
-            { color: colors.textSecondary, fontFamily: fonts.body },
-          ]}
-        >
-          {user?.email ?? ''}
-        </Text>
-      </View>
+          <AppWordmark size="lg" onLightBackground />
+          <Avatar name={user?.name ?? 'User'} size={84} />
+          <Text style={[styles.name, { color: colors.textPrimary, fontFamily: fonts.heading }]}>
+            {user?.name ?? 'User'}
+          </Text>
+          <Text style={[styles.email, { color: colors.textSecondary, fontFamily: fonts.body }]}>
+            {user?.email ?? ''}
+          </Text>
+        </LinearGradient>
+      )}
 
-      {/* Stats */}
       <View
         style={[
           styles.statsCard,
           {
             backgroundColor: colors.surface,
-            borderRadius: radius.md,
+            borderRadius: radius.lg,
             marginHorizontal: spacing.md,
-            marginTop: spacing.lg,
+            marginTop: -spacing.lg,
+            borderColor: colors.border,
             ...shadows.card,
           },
         ]}
       >
         {stats.map((stat, i) => (
           <React.Fragment key={stat.label}>
-            {i > 0 && (
-              <View
-                style={[styles.statDivider, { backgroundColor: colors.divider }]}
-              />
-            )}
+            {i > 0 ? (
+              <View style={[styles.statDivider, { backgroundColor: colors.divider }]} />
+            ) : null}
             <View style={styles.statItem}>
-              <Text
-                style={[
-                  styles.statValue,
-                  { color: colors.textPrimary, fontFamily: fonts.heading },
-                ]}
-              >
+              <Text style={[styles.statValue, { color: colors.primary, fontFamily: fonts.heading }]}>
                 {stat.value}
               </Text>
-              <Text
-                style={[
-                  styles.statLabel,
-                  { color: colors.textSecondary, fontFamily: fonts.body },
-                ]}
-              >
+              <Text style={[styles.statLabel, { color: colors.textSecondary, fontFamily: fonts.body }]}>
                 {stat.label}
               </Text>
             </View>
@@ -116,108 +119,59 @@ export const ProfileScreen: React.FC = () => {
         ))}
       </View>
 
-      {/* Settings */}
       <View
         style={[
           styles.settingsCard,
           {
             backgroundColor: colors.surface,
-            borderRadius: radius.md,
+            borderRadius: radius.lg,
             marginHorizontal: spacing.md,
             marginTop: spacing.lg,
+            borderColor: colors.border,
             ...shadows.card,
           },
         ]}
       >
-        {/* Notifications */}
-        <View style={[styles.settingRow, { borderBottomColor: colors.divider }]}>
-          <View style={styles.settingLeft}>
-            <MaterialCommunityIcons
-              name="bell-outline"
-              size={20}
-              color={colors.textSecondary}
+        <SettingRow
+          icon="bell-outline"
+          label="Notifications"
+          borderColor={colors.divider}
+          right={
+            <Switch
+              value={notificationsOn}
+              onValueChange={handleNotificationsToggle}
+              disabled={!isHydrated || isUpdating}
+              trackColor={{ false: colors.border, true: colors.primaryLight }}
+              thumbColor={notificationsOn ? colors.primary : colors.textDisabled}
             />
-            <Text
-              style={[
-                styles.settingLabel,
-                { color: colors.textPrimary, fontFamily: fonts.body },
-              ]}
-            >
-              Notifications
-            </Text>
-          </View>
-          <Switch
-            value={notificationsOn}
-            onValueChange={setNotificationsOn}
-            trackColor={{ false: colors.border, true: colors.primaryLight }}
-            thumbColor={notificationsOn ? colors.primary : colors.textDisabled}
-          />
-        </View>
-
-        {/* Theme */}
-        <View style={[styles.settingRow, { borderBottomColor: colors.divider }]}>
-          <View style={styles.settingLeft}>
-            <MaterialCommunityIcons
-              name="palette-outline"
-              size={20}
-              color={colors.textSecondary}
+          }
+        />
+        <SettingRow
+          icon="weather-night"
+          label="Dark Mode"
+          borderColor={colors.divider}
+          right={
+            <Switch
+              value={isDark}
+              onValueChange={toggleTheme}
+              trackColor={{ false: colors.border, true: colors.primaryLight }}
+              thumbColor={isDark ? colors.primary : colors.textDisabled}
             />
-            <Text
-              style={[
-                styles.settingLabel,
-                { color: colors.textPrimary, fontFamily: fonts.body },
-              ]}
-            >
-              Theme
-            </Text>
-          </View>
-          <View style={styles.settingRight}>
-            <Text
-              style={{ color: colors.textSecondary, fontFamily: fonts.body, fontSize: 14 }}
-            >
-              Light
-            </Text>
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={18}
-              color={colors.textDisabled}
-            />
-          </View>
-        </View>
-
-        {/* About */}
-        <View style={styles.settingRowLast}>
-          <View style={styles.settingLeft}>
-            <MaterialCommunityIcons
-              name="information-outline"
-              size={20}
-              color={colors.textSecondary}
-            />
-            <Text
-              style={[
-                styles.settingLabel,
-                { color: colors.textPrimary, fontFamily: fonts.body },
-              ]}
-            >
-              About TaskFlow
-            </Text>
-          </View>
-          <View style={styles.settingRight}>
-            <Text
-              style={{ color: colors.textSecondary, fontFamily: fonts.body, fontSize: 14 }}
-            >
+          }
+        />
+        <SettingRow
+          icon="information-outline"
+          label="About TaskFlow"
+          borderColor={colors.divider}
+          last
+          right={
+            <Text style={{ color: colors.textSecondary, fontFamily: fonts.body, fontSize: 14 }}>
               v1.0.0
             </Text>
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={18}
-              color={colors.textDisabled}
-            />
-          </View>
-        </View>
+          }
+        />
       </View>
 
-      {/* Sign Out */}
       <View style={{ marginHorizontal: spacing.md, marginTop: spacing.xl }}>
         <Button
           label="Sign Out"
@@ -227,7 +181,7 @@ export const ProfileScreen: React.FC = () => {
           size="lg"
         />
 
-        {showLogoutConfirm && (
+        {showLogoutConfirm ? (
           <Animated.View
             entering={FadeInDown.duration(200)}
             exiting={FadeOutUp.duration(150)}
@@ -259,33 +213,60 @@ export const ProfileScreen: React.FC = () => {
                 size="sm"
                 onPress={() => setShowLogoutConfirm(false)}
               />
-              <Button
-                label="Confirm"
-                variant="danger"
-                size="sm"
-                onPress={handleLogout}
-              />
+              <Button label="Confirm" variant="danger" size="sm" onPress={handleLogout} />
             </View>
           </Animated.View>
-        )}
+        ) : null}
       </View>
     </ScrollView>
   );
 };
 
+function SettingRow({
+  icon,
+  label,
+  right,
+  borderColor,
+  last = false,
+}: {
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  label: string;
+  right: React.ReactNode;
+  borderColor: string;
+  last?: boolean;
+}) {
+  const { colors, fonts } = useTheme();
+
+  return (
+    <View
+      style={[
+        styles.settingRow,
+        !last ? { borderBottomWidth: 1, borderBottomColor: borderColor } : null,
+      ]}
+    >
+      <View style={styles.settingLeft}>
+        <MaterialCommunityIcons name={icon} size={20} color={colors.primary} />
+        <Text style={[styles.settingLabel, { color: colors.textPrimary, fontFamily: fonts.body }]}>
+          {label}
+        </Text>
+      </View>
+      {right}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  hero: {
     alignItems: 'center',
-    paddingBottom: 24,
-    borderBottomWidth: 1,
-    gap: 4,
+    paddingBottom: 36,
+    gap: 12,
   },
   name: {
-    fontSize: 22,
-    marginTop: 12,
+    fontSize: 24,
+    marginTop: 4,
   },
   email: {
     fontSize: 14,
@@ -293,6 +274,7 @@ const styles = StyleSheet.create({
   statsCard: {
     flexDirection: 'row',
     padding: 20,
+    borderWidth: 1,
   },
   statItem: {
     flex: 1,
@@ -300,7 +282,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 26,
   },
   statLabel: {
     fontSize: 13,
@@ -310,31 +292,19 @@ const styles = StyleSheet.create({
   },
   settingsCard: {
     overflow: 'hidden',
+    borderWidth: 1,
   },
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  settingRowLast: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  settingRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
   },
   settingLabel: {
     fontSize: 15,

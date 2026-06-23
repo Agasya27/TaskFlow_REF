@@ -1,14 +1,11 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useTheme } from '@theme/index';
 import { useAuthStore } from '@store/authStore';
+import { RibbonBrandHeader } from '@components/ui/RibbonBrandHeader';
 import { AuthNavigator } from './AuthNavigator';
 import { TabNavigator } from './TabNavigator';
 import { AddTaskScreen } from '@screens/tasks/AddTaskScreen';
@@ -16,25 +13,28 @@ import { AddTaskScreen } from '@screens/tasks/AddTaskScreen';
 const RootStack = createStackNavigator();
 
 function SplashScreen() {
-  const { colors, fonts } = useTheme();
+  const { gradients } = useTheme();
   return (
-    <View style={[styles.splash, { backgroundColor: colors.primary }]}>
-      <Text style={[styles.splashText, { fontFamily: fonts.display }]}>
-        TaskFlow
-      </Text>
-      <ActivityIndicator size="large" color="#FFFFFF" style={{ marginTop: 16 }} />
-    </View>
+    <LinearGradient
+      colors={[...gradients.primary]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.splash}
+    >
+      <RibbonBrandHeader lightText />
+      <ActivityIndicator size="large" color="#FFFFFF" style={{ marginTop: 24 }} />
+    </LinearGradient>
   );
 }
 
 export const AppNavigator: React.FC = () => {
-  const { user, isLoading, restoreSession } = useAuthStore();
+  const { user, isInitializing, restoreSession } = useAuthStore();
 
   useEffect(() => {
     restoreSession();
   }, [restoreSession]);
 
-  if (isLoading) {
+  if (isInitializing) {
     return <SplashScreen />;
   }
 
@@ -63,9 +63,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  splashText: {
-    fontSize: 36,
-    color: '#FFFFFF',
   },
 });

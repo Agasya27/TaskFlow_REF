@@ -4,30 +4,49 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@theme/index';
+import { useTaskStore } from '@store/taskStore';
 
 export const OfflineBanner: React.FC = () => {
   const netInfo = useNetInfo();
   const { colors, fonts, spacing } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isFromCache, pendingCount } = useTaskStore();
 
-  // Only show when explicitly disconnected (not during initial unknown state)
-  if (netInfo.isConnected !== false) return null;
+  const isOffline = netInfo.isConnected === false;
+  const showPending = pendingCount > 0 && !isOffline;
+
+  if (!isOffline && !showPending && !isFromCache) return null;
+
+  const message = isOffline
+    ? "You're offline · Changes will sync when you're back"
+    : showPending
+      ? `Syncing ${pendingCount} pending change${pendingCount === 1 ? '' : 's'}…`
+      : 'Showing cached tasks';
 
   return (
     <View
       style={[
         styles.banner,
         {
-          backgroundColor: colors.warningLight,
+          backgroundColor: isOffline ? colors.warningLight : colors.primaryLight,
           paddingTop: insets.top + spacing.xs,
           paddingHorizontal: spacing.md,
           paddingBottom: spacing.sm,
         },
       ]}
     >
-      <MaterialCommunityIcons name="wifi-off" size={16} color={colors.warning} />
-      <Text style={[styles.text, { color: colors.warning, fontFamily: fonts.label }]}>
-        You're offline · Changes will sync when you're back
+      <MaterialCommunityIcons
+        name={isOffline ? 'wifi-off' : 'cloud-sync-outline'}
+        size={16}
+        color={isOffline ? colors.warning : colors.primary}
+      />
+      <Text
+        style={[
+          styles.text,
+          { color: isOffline ? colors.warning : colors.primary, fontFamily: fonts.label },
+        ]}
+      >
+        {message}
       </Text>
     </View>
   );

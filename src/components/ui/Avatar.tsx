@@ -9,8 +9,8 @@ interface AvatarProps {
 }
 
 const AVATAR_COLORS = [
-  '#5B4FE9', '#22C55E', '#F59E0B', '#EF4444',
-  '#8B5CF6', '#EC4899', '#06B6D4', '#14B8A6',
+  '#4F6BF6', '#9B5DE5', '#22C55E', '#F59E0B',
+  '#EF4444', '#EC4899', '#06B6D4', '#14B8A6',
 ];
 
 function hashName(name: string): number {

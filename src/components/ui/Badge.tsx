@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@theme/index';
 
-type BadgeVariant = 'success' | 'warning' | 'danger' | 'neutral' | 'primary';
+type BadgeVariant = 'success' | 'warning' | 'danger' | 'neutral' | 'primary' | 'info';
 type BadgeSize = 'sm' | 'md';
 
 interface BadgeProps {
@@ -24,6 +24,7 @@ export const Badge: React.FC<BadgeProps> = ({
     danger: { bg: colors.dangerLight, text: colors.danger },
     neutral: { bg: colors.surfaceAlt, text: colors.textSecondary },
     primary: { bg: colors.primaryLight, text: colors.primary },
+    info: { bg: colors.infoLight, text: colors.info },
   };
 
   const sizeMap: Record<BadgeSize, { py: number; px: number; fontSize: number }> = {
@@ -33,6 +34,7 @@ export const Badge: React.FC<BadgeProps> = ({
 
   const v = variantMap[variant];
   const s = sizeMap[size];
+  const displayLabel = label.charAt(0).toUpperCase() + label.slice(1);
 
   return (
     <View
@@ -53,7 +55,7 @@ export const Badge: React.FC<BadgeProps> = ({
           color: v.text,
         }}
       >
-        {label}
+        {displayLabel}
       </Text>
     </View>
   );

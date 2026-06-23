@@ -17,15 +17,16 @@ interface TaskCardProps {
   task: Task;
   index: number;
   onToggle: (id: number) => void;
+  onPress?: (task: Task) => void;
 }
 
 const PRIORITY_VARIANT = {
-  low: 'neutral',
+  low: 'info',
   medium: 'warning',
   high: 'danger',
 } as const;
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task, index, onToggle }) => {
+export const TaskCard: React.FC<TaskCardProps> = ({ task, index, onToggle, onPress }) => {
   const { colors, fonts, spacing, radius, shadows } = useTheme();
   const checkScale = useSharedValue(1);
 
@@ -34,7 +35,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, onToggle }) => 
   }));
 
   const handleToggle = () => {
-    checkScale.value = withSpring(0.8, { damping: 10 }, () => {
+    checkScale.value = withSpring(0.85, { damping: 10 }, () => {
       checkScale.value = withSpring(1, { damping: 10 });
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -51,14 +52,16 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, onToggle }) => 
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(index * 60).springify()}
+      entering={FadeInDown.delay(index * 50).springify()}
       style={[
         styles.card,
         {
           backgroundColor: task.completed ? colors.surfaceAlt : colors.surface,
-          borderRadius: radius.md,
+          borderRadius: radius.lg,
           padding: spacing.md,
           marginBottom: spacing.sm,
+          borderColor: colors.border,
+          borderWidth: 1,
           ...shadows.card,
         },
       ]}
@@ -66,15 +69,25 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, onToggle }) => 
       <View style={styles.row}>
         <Pressable onPress={handleToggle} hitSlop={8}>
           <Animated.View style={checkAnimStyle}>
-            <MaterialCommunityIcons
-              name={task.completed ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline'}
-              size={24}
-              color={task.completed ? colors.success : colors.textDisabled}
-            />
+            {task.completed ? (
+              <MaterialCommunityIcons name="check-circle" size={26} color={colors.success} />
+            ) : (
+              <MaterialCommunityIcons
+                name="circle-outline"
+                size={26}
+                color={colors.textDisabled}
+              />
+            )}
           </Animated.View>
         </Pressable>
 
-        <View style={styles.content}>
+        <Pressable
+          style={styles.content}
+          onPress={() => onPress?.(task)}
+          disabled={!onPress}
+          accessibilityRole="button"
+          accessibilityLabel={`View details for ${task.title}`}
+        >
           <Text
             numberOfLines={2}
             style={[
@@ -90,30 +103,24 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, onToggle }) => 
           </Text>
 
           <View style={styles.meta}>
-            <Badge
-              label={task.priority}
-              variant={PRIORITY_VARIANT[task.priority]}
-              size="sm"
-            />
+            <Badge label={task.priority} variant={PRIORITY_VARIANT[task.priority]} size="sm" />
             {formattedDate ? (
-              <Text
-                style={[
-                  styles.date,
-                  { color: colors.textSecondary, fontFamily: fonts.body },
-                ]}
-              >
-                {formattedDate}
+              <Text style={[styles.date, { color: colors.textSecondary, fontFamily: fonts.body }]}>
+                • {formattedDate}
               </Text>
             ) : null}
           </View>
-        </View>
+        </Pressable>
 
-        <MaterialCommunityIcons
-          name="chevron-right"
-          size={18}
-          color={colors.textDisabled}
-          style={{ opacity: 0.5 }}
-        />
+        <Pressable
+          onPress={() => onPress?.(task)}
+          disabled={!onPress}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`View details for ${task.title}`}
+        >
+          <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textDisabled} />
+        </Pressable>
       </View>
     </Animated.View>
   );
@@ -132,12 +139,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 15,
-    lineHeight: 20,
+    lineHeight: 21,
   },
   meta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   date: {
     fontSize: 12,

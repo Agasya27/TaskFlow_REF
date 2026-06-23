@@ -4,7 +4,10 @@ const KEYS = {
   USER: '@taskflow/user',
   TOKEN: '@taskflow/token',
   TASKS_CACHE: '@taskflow/tasks_cache',
+  PENDING_MUTATIONS: '@taskflow/pending_mutations',
   THEME_PREF: '@taskflow/theme',
+  NOTIFICATIONS_ENABLED: '@taskflow/notifications_enabled',
+  PUSH_TOKEN: '@taskflow/push_token',
 } as const;
 
 async function getItem<T>(key: string): Promise<T | null> {

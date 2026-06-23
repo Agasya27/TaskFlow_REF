@@ -10,9 +10,10 @@ import {
   Platform,
 } from 'react-native';
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@theme/index';
@@ -20,19 +21,22 @@ import { Input } from '@components/ui/Input';
 import { Button } from '@components/ui/Button';
 import { useToast } from '@components/ui/Toast';
 import { useTaskStore } from '@store/taskStore';
+import { useNotificationStore } from '@store/notificationStore';
+import { showTaskAddedNotification } from '@services/notificationService';
 import { validateTaskTitle } from '@utils/validation';
 import { Task } from '@services/taskService';
 
 const PRIORITIES: Task['priority'][] = ['low', 'medium', 'high'];
 const PRIORITY_LABELS = { low: 'Low', medium: 'Medium', high: 'High' };
 const NOTES_MAX = 300;
+const PRIORITY_ANIM = { duration: 220, easing: Easing.inOut(Easing.ease) };
 
 interface AddTaskScreenProps {
   navigation: { goBack: () => void };
 }
 
 export const AddTaskScreen: React.FC<AddTaskScreenProps> = ({ navigation }) => {
-  const { colors, fonts, spacing, radius } = useTheme();
+  const { colors, fonts, spacing, radius, shadows } = useTheme();
   const insets = useSafeAreaInsets();
   const { show: showToast } = useToast();
   const addTask = useTaskStore((s) => s.addTask);
@@ -43,22 +47,18 @@ export const AddTaskScreen: React.FC<AddTaskScreenProps> = ({ navigation }) => {
   const [titleError, setTitleError] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Segmented control animation
   const segmentWidth = useSharedValue(0);
   const indicatorX = useSharedValue(0);
 
   const onSegmentLayout = (event: { nativeEvent: { layout: { width: number } } }) => {
     const w = event.nativeEvent.layout.width / 3;
     segmentWidth.value = w;
-    indicatorX.value = withSpring(PRIORITIES.indexOf(priority) * w);
+    indicatorX.value = withTiming(PRIORITIES.indexOf(priority) * w, PRIORITY_ANIM);
   };
 
   const selectPriority = (p: Task['priority']) => {
     setPriority(p);
-    indicatorX.value = withSpring(PRIORITIES.indexOf(p) * segmentWidth.value, {
-      damping: 15,
-      stiffness: 200,
-    });
+    indicatorX.value = withTiming(PRIORITIES.indexOf(p) * segmentWidth.value, PRIORITY_ANIM);
   };
 
   const indicatorStyle = useAnimatedStyle(() => ({
@@ -78,6 +78,9 @@ export const AddTaskScreen: React.FC<AddTaskScreenProps> = ({ navigation }) => {
 
     try {
       await addTask({ title: title.trim(), completed: false, priority });
+      if (useNotificationStore.getState().enabled) {
+        await showTaskAddedNotification(title.trim());
+      }
       showToast('Task added', 'success');
       navigation.goBack();
     } catch {
@@ -92,7 +95,6 @@ export const AddTaskScreen: React.FC<AddTaskScreenProps> = ({ navigation }) => {
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Header bar */}
       <View
         style={[
           styles.headerBar,
@@ -129,121 +131,117 @@ export const AddTaskScreen: React.FC<AddTaskScreenProps> = ({ navigation }) => {
       <ScrollView
         contentContainerStyle={[styles.form, { padding: spacing.lg }]}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <Input
-          label="Title"
-          placeholder="What needs to be done?"
-          value={title}
-          onChangeText={setTitle}
-          error={titleError}
-          maxLength={100}
-        />
+        <View
+          style={[
+            styles.formCard,
+            {
+              backgroundColor: colors.surface,
+              borderRadius: radius.lg,
+              padding: spacing.lg,
+              borderColor: colors.border,
+              ...shadows.card,
+            },
+          ]}
+        >
+          <Input
+            label="Title"
+            placeholder="What needs to be done?"
+            value={title}
+            onChangeText={setTitle}
+            error={titleError}
+            maxLength={100}
+          />
 
-        {/* Priority segmented control */}
-        <View style={{ marginBottom: spacing.lg }}>
-          <Text
-            style={[
-              styles.label,
-              { color: colors.textSecondary, fontFamily: fonts.label, marginBottom: spacing.sm },
-            ]}
-          >
-            Priority
-          </Text>
-          <View
-            style={[
-              styles.segmentContainer,
-              { backgroundColor: colors.surfaceAlt, borderRadius: radius.md },
-            ]}
-            onLayout={onSegmentLayout}
-          >
-            {/* Sliding indicator */}
-            <Animated.View
+          <View style={{ marginBottom: spacing.lg }}>
+            <Text
               style={[
-                styles.segmentIndicator,
+                styles.label,
+                { color: colors.textSecondary, fontFamily: fonts.label, marginBottom: spacing.sm },
+              ]}
+            >
+              Priority
+            </Text>
+            <View
+              style={[
+                styles.segmentContainer,
+                { backgroundColor: colors.surfaceAlt, borderRadius: radius.md },
+              ]}
+              onLayout={onSegmentLayout}
+            >
+              <Animated.View
+                style={[
+                  styles.segmentIndicator,
+                  {
+                    backgroundColor: colors.surface,
+                    borderRadius: radius.sm,
+                    ...shadows.social,
+                  },
+                  indicatorStyle,
+                ]}
+              />
+              {PRIORITIES.map((p) => (
+                <Pressable key={p} style={styles.segmentButton} onPress={() => selectPriority(p)}>
+                  <Text
+                    style={{
+                      fontFamily: fonts.label,
+                      fontSize: 14,
+                      color: priority === p ? colors.primary : colors.textSecondary,
+                    }}
+                  >
+                    {PRIORITY_LABELS[p]}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          <View style={{ marginBottom: spacing.lg }}>
+            <Text
+              style={[
+                styles.label,
+                { color: colors.textSecondary, fontFamily: fonts.label, marginBottom: spacing.sm },
+              ]}
+            >
+              Notes (optional)
+            </Text>
+            <View
+              style={[
+                styles.notesContainer,
                 {
-                  backgroundColor: colors.surface,
-                  borderRadius: radius.sm,
-                  shadowColor: colors.shadow,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.15,
-                  shadowRadius: 4,
-                  elevation: 2,
+                  backgroundColor: colors.inputBackground,
+                  borderRadius: radius.md,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
                 },
-                indicatorStyle,
               ]}
-            />
-            {PRIORITIES.map((p) => (
-              <Pressable
-                key={p}
-                style={styles.segmentButton}
-                onPress={() => selectPriority(p)}
-              >
-                <Text
-                  style={{
-                    fontFamily: fonts.label,
-                    fontSize: 14,
-                    color: priority === p ? colors.textPrimary : colors.textSecondary,
-                  }}
-                >
-                  {PRIORITY_LABELS[p]}
-                </Text>
-              </Pressable>
-            ))}
+            >
+              <TextInput
+                style={[styles.notesInput, { color: colors.textPrimary, fontFamily: fonts.body }]}
+                placeholder="Add any notes..."
+                placeholderTextColor={colors.textDisabled}
+                value={notes}
+                onChangeText={(t) => setNotes(t.slice(0, NOTES_MAX))}
+                multiline
+                maxLength={NOTES_MAX}
+                textAlignVertical="top"
+              />
+            </View>
+            <Text style={[styles.charCount, { color: colors.textDisabled, fontFamily: fonts.body }]}>
+              {notes.length}/{NOTES_MAX}
+            </Text>
           </View>
-        </View>
 
-        {/* Notes */}
-        <View style={{ marginBottom: spacing.lg }}>
-          <Text
-            style={[
-              styles.label,
-              { color: colors.textSecondary, fontFamily: fonts.label, marginBottom: spacing.sm },
-            ]}
-          >
-            Notes (optional)
-          </Text>
-          <View
-            style={[
-              styles.notesContainer,
-              {
-                backgroundColor: colors.surfaceAlt,
-                borderRadius: radius.md,
-                borderWidth: 1.5,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <TextInput
-              style={[
-                styles.notesInput,
-                { color: colors.textPrimary, fontFamily: fonts.body },
-              ]}
-              placeholder="Add any notes..."
-              placeholderTextColor={colors.textDisabled}
-              value={notes}
-              onChangeText={(t) => setNotes(t.slice(0, NOTES_MAX))}
-              multiline
-              maxLength={NOTES_MAX}
-              textAlignVertical="top"
-            />
-          </View>
-          <Text
-            style={[
-              styles.charCount,
-              { color: colors.textDisabled, fontFamily: fonts.body },
-            ]}
-          >
-            {notes.length}/{NOTES_MAX}
-          </Text>
+          <Button
+            label="Add Task"
+            onPress={handleSubmit}
+            loading={isSubmitting}
+            variant="gradient"
+            fullWidth
+            size="lg"
+          />
         </View>
-
-        <Button
-          label="Add Task"
-          onPress={handleSubmit}
-          loading={isSubmitting}
-          fullWidth
-          size="lg"
-        />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -270,12 +268,15 @@ const styles = StyleSheet.create({
   form: {
     flexGrow: 1,
   },
+  formCard: {
+    borderWidth: 1,
+  },
   label: {
     fontSize: 13,
   },
   segmentContainer: {
     flexDirection: 'row',
-    height: 40,
+    height: 44,
     padding: 3,
     position: 'relative',
   },

@@ -47,15 +47,15 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {subtitle}
         </Text>
       )}
-      {action && (
+      {action ? (
         <Button
           label={action.label}
           onPress={action.onPress}
-          variant="secondary"
+          variant="gradient"
           size="sm"
           style={{ marginTop: spacing.md }}
         />
-      )}
+      ) : null}
     </View>
   );
 };

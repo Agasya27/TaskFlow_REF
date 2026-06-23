@@ -45,7 +45,7 @@ export const Input: React.FC<InputProps> = ({
   containerStyle,
   ...rest
 }) => {
-  const { colors, fonts, spacing, radius } = useTheme();
+  const { colors, fonts, spacing, radius, shadows } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const [secureVisible, setSecureVisible] = useState(!secureProp);
   const focusProgress = useSharedValue(0);
@@ -78,63 +78,40 @@ export const Input: React.FC<InputProps> = ({
     return { color };
   });
 
-  const styles = StyleSheet.create({
-    container: {
-      marginBottom: spacing.md,
-    },
-    label: {
-      fontFamily: fonts.label,
-      fontSize: 13,
-      marginBottom: spacing.xs,
-    },
-    inputContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.surfaceAlt,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      paddingHorizontal: spacing.md,
-      height: 48,
-      gap: spacing.sm,
-    },
-    input: {
-      flex: 1,
-      fontFamily: fonts.body,
-      fontSize: 15,
-      color: colors.textPrimary,
-      height: '100%',
-    },
-    errorText: {
-      fontFamily: fonts.body,
-      fontSize: 12,
-      color: colors.danger,
-      marginTop: spacing.xs,
-    },
-    hintText: {
-      fontFamily: fonts.body,
-      fontSize: 12,
-      color: colors.textSecondary,
-      marginTop: spacing.xs,
-    },
-  });
-
   return (
-    <View style={[styles.container, containerStyle]}>
-      {label && (
-        <Animated.Text style={[styles.label, labelAnimatedStyle]}>
+    <View style={[styles.container, { marginBottom: spacing.md }, containerStyle]}>
+      {label ? (
+        <Animated.Text
+          style={[
+            styles.label,
+            { fontFamily: fonts.label, marginBottom: spacing.xs },
+            labelAnimatedStyle,
+          ]}
+        >
           {label}
         </Animated.Text>
-      )}
-      <AnimatedView style={[styles.inputContainer, borderAnimatedStyle]}>
-        {leftIcon && (
+      ) : null}
+      <AnimatedView
+        style={[
+          styles.inputContainer,
+          {
+            backgroundColor: colors.inputBackground,
+            borderRadius: radius.md,
+            paddingHorizontal: spacing.md,
+            ...shadows.social,
+          },
+          borderAnimatedStyle,
+        ]}
+      >
+        {leftIcon ? (
           <MaterialCommunityIcons
             name={leftIcon}
             size={20}
             color={isFocused ? colors.primary : colors.textSecondary}
           />
-        )}
+        ) : null}
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: colors.textPrimary, fontFamily: fonts.body }]}
           placeholder={placeholder}
           placeholderTextColor={colors.textDisabled}
           value={value}
@@ -144,25 +121,64 @@ export const Input: React.FC<InputProps> = ({
           secureTextEntry={secureProp && !secureVisible}
           {...rest}
         />
-        {secureProp && (
-          <Pressable onPress={() => setSecureVisible(!secureVisible)}>
+        {secureProp ? (
+          <Pressable
+            onPress={() => setSecureVisible(!secureVisible)}
+            accessibilityRole="button"
+            accessibilityLabel={secureVisible ? 'Hide password' : 'Show password'}
+          >
             <MaterialCommunityIcons
               name={secureVisible ? 'eye-off-outline' : 'eye-outline'}
               size={20}
               color={colors.textSecondary}
             />
           </Pressable>
-        )}
-        {rightIcon && !secureProp && (
+        ) : null}
+        {rightIcon && !secureProp ? (
           <MaterialCommunityIcons
             name={rightIcon}
             size={20}
             color={isFocused ? colors.primary : colors.textSecondary}
           />
-        )}
+        ) : null}
       </AnimatedView>
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      {hint && !error && <Text style={styles.hintText}>{hint}</Text>}
+      {error ? (
+        <Text style={[styles.errorText, { color: colors.danger, fontFamily: fonts.body }]}>
+          {error}
+        </Text>
+      ) : null}
+      {hint && !error ? (
+        <Text style={[styles.hintText, { color: colors.textSecondary, fontFamily: fonts.body }]}>
+          {hint}
+        </Text>
+      ) : null}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {},
+  label: {
+    fontSize: 13,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    height: 52,
+    gap: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    height: '100%',
+  },
+  errorText: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  hintText: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+});

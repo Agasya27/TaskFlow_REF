@@ -9,8 +9,10 @@
       "@services/*": ["./src/services/*"],
       "@utils/*": ["./src/utils/*"],
       "@theme/*": ["./src/theme/*"],
-      "@assets/*": ["./src/assets/*"],
-      "@navigation/*": ["./src/navigation/*"]
+      "@assets/*": ["./assets/*"],
+      "@navigation/*": ["./src/navigation/*"],
+      "@config/*": ["./src/config/*"],
+      "@hooks/*": ["./src/hooks/*"]
     }
   }
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TextInput, StyleSheet } from 'react-native';
+import { View, TextInput, Pressable, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@theme/index';
 
@@ -19,22 +19,17 @@ export const TaskSearchBar: React.FC<TaskSearchBarProps> = ({
       style={[
         styles.container,
         {
-          backgroundColor: colors.surfaceAlt,
-          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          borderRadius: radius.full,
           paddingHorizontal: spacing.md,
+          borderColor: colors.border,
+          borderWidth: 1,
         },
       ]}
     >
-      <MaterialCommunityIcons
-        name="magnify"
-        size={20}
-        color={colors.textSecondary}
-      />
+      <MaterialCommunityIcons name="magnify" size={20} color={colors.textSecondary} />
       <TextInput
-        style={[
-          styles.input,
-          { color: colors.textPrimary, fontFamily: fonts.body },
-        ]}
+        style={[styles.input, { color: colors.textPrimary, fontFamily: fonts.body }]}
         placeholder="Search tasks..."
         placeholderTextColor={colors.textDisabled}
         value={value}
@@ -42,6 +37,9 @@ export const TaskSearchBar: React.FC<TaskSearchBarProps> = ({
         returnKeyType="search"
         autoCorrect={false}
       />
+      <Pressable hitSlop={8} accessibilityRole="button" accessibilityLabel="Filter tasks">
+        <MaterialCommunityIcons name="tune-variant" size={20} color={colors.textSecondary} />
+      </Pressable>
     </View>
   );
 };
@@ -50,7 +48,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 44,
+    height: 48,
     gap: 8,
   },
   input: {

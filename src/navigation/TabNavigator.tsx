@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useTheme } from '@theme/index';
 import { TaskDashboard } from '@screens/tasks/TaskDashboard';
@@ -11,6 +12,18 @@ import { ProfileScreen } from '@screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 const TaskStack = createStackNavigator();
+
+const TAB_LABELS: Record<string, string> = {
+  Tasks: 'Home',
+  AddTab: 'Add Task',
+  Profile: 'Profile',
+};
+
+const TAB_ICONS: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
+  Tasks: 'home-variant',
+  AddTab: 'plus',
+  Profile: 'account',
+};
 
 function TaskStackNavigator() {
   return (
@@ -21,21 +34,15 @@ function TaskStackNavigator() {
 }
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, radius, gradients } = useTheme();
   const insets = useSafeAreaInsets();
-
-  const icons: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
-    Tasks: 'home-variant',
-    AddTab: 'plus-circle',
-    Profile: 'account',
-  };
 
   return (
     <View
       style={[
         styles.tabBar,
         {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.navBackground,
           borderTopColor: colors.divider,
           paddingBottom: insets.bottom || spacing.sm,
         },
@@ -44,10 +51,12 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;
-        const iconName = icons[route.name] ?? 'circle';
+        const isAdd = route.name === 'AddTab';
+        const iconName = TAB_ICONS[route.name] ?? 'circle';
+        const label = TAB_LABELS[route.name] ?? route.name;
 
         const onPress = () => {
-          if (route.name === 'AddTab') {
+          if (isAdd) {
             navigation.getParent()?.navigate('AddTaskModal' as never);
             return;
           }
@@ -61,27 +70,43 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             key={route.key}
             onPress={onPress}
             accessibilityRole="button"
-            accessibilityLabel={options.tabBarAccessibilityLabel ?? route.name}
+            accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
             accessibilityState={isFocused ? { selected: true } : {}}
             style={styles.tabItem}
             hitSlop={8}
           >
-            {isFocused && route.name !== 'AddTab' && (
-              <View
-                style={[styles.activeIndicator, { backgroundColor: colors.primary }]}
+            {isFocused && !isAdd ? (
+              <View style={[styles.activeBar, { backgroundColor: colors.primary }]} />
+            ) : (
+              <View style={styles.activeBarPlaceholder} />
+            )}
+
+            {isAdd ? (
+              <LinearGradient
+                colors={[...gradients.primary]}
+                style={[styles.addButton, { borderRadius: radius.full }]}
+              >
+                <MaterialCommunityIcons name={iconName} size={22} color="#FFFFFF" />
+              </LinearGradient>
+            ) : (
+              <MaterialCommunityIcons
+                name={iconName}
+                size={24}
+                color={isFocused ? colors.primary : colors.textDisabled}
               />
             )}
-            <MaterialCommunityIcons
-              name={iconName}
-              size={route.name === 'AddTab' ? 32 : 24}
-              color={
-                route.name === 'AddTab'
-                  ? colors.primary
-                  : isFocused
-                    ? colors.primary
-                    : colors.textDisabled
-              }
-            />
+
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: isFocused ? colors.primary : colors.textDisabled,
+                  fontFamily: 'Inter_500Medium',
+                },
+              ]}
+            >
+              {label}
+            </Text>
           </Pressable>
         );
       })}
@@ -112,20 +137,32 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    paddingTop: 8,
+    paddingTop: 6,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 4,
-    position: 'relative',
+    gap: 3,
   },
-  activeIndicator: {
-    position: 'absolute',
-    top: -8,
-    width: 20,
+  activeBar: {
+    width: 28,
     height: 3,
     borderRadius: 2,
+    marginBottom: 2,
+  },
+  activeBarPlaceholder: {
+    height: 5,
+  },
+  addButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -6,
+  },
+  label: {
+    fontSize: 11,
   },
 });

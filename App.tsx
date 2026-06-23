@@ -11,13 +11,31 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
-import { ThemeProvider } from '@theme/index';
+import * as WebBrowser from 'expo-web-browser';
+import { ThemeProvider, useTheme } from '@theme/index';
 import { ToastProvider } from '@components/ui/Toast';
 import { ErrorBoundary } from '@components/ui/ErrorBoundary';
 import { OfflineBanner } from '@components/ui/OfflineBanner';
 import { AppNavigator } from '@navigation/AppNavigator';
+import { useOfflineSync } from '@hooks/useOfflineSync';
+import { useNotifications } from '@hooks/useNotifications';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+WebBrowser.maybeCompleteAuthSession();
+
+function AppContent() {
+  const { isDark } = useTheme();
+  useOfflineSync();
+  useNotifications();
+
+  return (
+  <>
+    <OfflineBanner />
+    <StatusBar style={isDark ? 'light' : 'dark'} />
+    <AppNavigator />
+  </>
+  );
+}
 
 export default function App() {
   const [fontsLoaded, fontError] = useFonts({
@@ -36,7 +54,7 @@ export default function App() {
   if (!fontsLoaded && !fontError) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color="#5B4FE9" />
+        <ActivityIndicator size="large" color="#6366F1" />
       </View>
     );
   }
@@ -47,9 +65,7 @@ export default function App() {
         <ThemeProvider>
           <ErrorBoundary>
             <ToastProvider>
-              <OfflineBanner />
-              <StatusBar style="dark" />
-              <AppNavigator />
+              <AppContent />
             </ToastProvider>
           </ErrorBoundary>
         </ThemeProvider>

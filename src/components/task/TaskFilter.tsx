@@ -23,28 +23,30 @@ export const TaskFilter: React.FC<TaskFilterProps> = ({ active, onChange }) => {
       {FILTERS.map(({ key, label }) => {
         const isActive = key === active;
         return (
-          <Pressable
-            key={key}
-            onPress={() => onChange(key)}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: isActive ? colors.primary : colors.surfaceAlt,
-                paddingVertical: spacing.sm,
-                paddingHorizontal: spacing.md,
-                borderRadius: radius.full,
-              },
-            ]}
-          >
-            <Text
-              style={{
-                fontFamily: fonts.label,
-                fontSize: 13,
-                color: isActive ? '#FFFFFF' : colors.textSecondary,
-              }}
+          <Pressable key={key} onPress={() => onChange(key)}>
+            <View
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: isActive ? colors.primary : colors.chipInactive,
+                  paddingVertical: 9,
+                  paddingHorizontal: spacing.md,
+                  borderRadius: radius.full,
+                  borderWidth: isActive ? 0 : 1,
+                  borderColor: colors.border,
+                },
+              ]}
             >
-              {label}
-            </Text>
+              <Text
+                style={{
+                  fontFamily: fonts.label,
+                  fontSize: 13,
+                  color: isActive ? '#FFFFFF' : colors.textSecondary,
+                }}
+              >
+                {label}
+              </Text>
+            </View>
           </Pressable>
         );
       })}
