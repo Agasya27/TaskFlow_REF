@@ -4,7 +4,17 @@ A polished task management app built with React Native and Expo for the KnockOnc
 
 ## Screenshots
 
-_Screenshots to be added after final build._
+| Login | Dashboard (dark mode) |
+| :---: | :---: |
+| ![Login screen](assets/screenshots/login.png) | ![Task dashboard](assets/screenshots/dashboard.png) |
+
+| Search & filter | Add task |
+| :---: | :---: |
+| ![Search tasks](assets/screenshots/search.png) | ![New task form](assets/screenshots/add-task.png) |
+
+| Profile |
+| :---: |
+| ![Profile screen](assets/screenshots/profile.png) |
 
 ## Features
 
