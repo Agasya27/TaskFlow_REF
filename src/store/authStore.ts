@@ -23,7 +23,7 @@ function nameFromEmail(email: string): string {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
-  isLoading: false,
+  isLoading: true,
 
   login: async (email: string, _password: string) => {
     set({ isLoading: true });

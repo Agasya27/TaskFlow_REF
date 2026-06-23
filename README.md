@@ -22,8 +22,8 @@ _Screenshots to be added after final build._
 
 | Category            | Library                                   | Version  |
 | ------------------- | ----------------------------------------- | -------- |
-| Framework           | React Native (Expo managed)               | 0.85     |
-| Language            | TypeScript (strict)                       | 6.0      |
+| Framework           | React Native (Expo managed)               | 0.81     |
+| Language            | TypeScript (strict)                       | 5.9      |
 | Navigation          | React Navigation (Stack + Bottom Tabs)    | 7.x      |
 | State Management    | Zustand                                   | 5.x      |
 | HTTP                | Axios                                     | 1.x      |

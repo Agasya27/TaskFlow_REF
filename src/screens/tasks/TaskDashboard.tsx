@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '@theme/index';
 import { useTaskStore, useFilteredTasks } from '@store/taskStore';
 import { useAuthStore } from '@store/authStore';
@@ -20,13 +21,8 @@ import { EmptyState } from '@components/ui/EmptyState';
 import { Avatar } from '@components/ui/Avatar';
 import { Task } from '@services/taskService';
 
-interface TaskDashboardProps {
-  navigation: {
-    navigate: (screen: string) => void;
-  };
-}
-
-export const TaskDashboard: React.FC<TaskDashboardProps> = ({ navigation }) => {
+export const TaskDashboard: React.FC = () => {
+  const navigation = useNavigation();
   const { colors, fonts, spacing } = useTheme();
   const insets = useSafeAreaInsets();
   const { isLoading, filter, searchQuery, fetchTasks, toggleTask, setFilter, setSearch, tasks } =
@@ -37,6 +33,14 @@ export const TaskDashboard: React.FC<TaskDashboardProps> = ({ navigation }) => {
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
+
+  const openAddTask = () => {
+    navigation.getParent()?.getParent()?.navigate('AddTaskModal' as never);
+  };
+
+  const openProfile = () => {
+    navigation.getParent()?.navigate('Profile' as never);
+  };
 
   const completedCount = tasks.filter((t) => t.completed).length;
 
@@ -104,7 +108,7 @@ export const TaskDashboard: React.FC<TaskDashboardProps> = ({ navigation }) => {
         subtitle="Tap the + button to add your first task"
         action={{
           label: 'Add Task',
-          onPress: () => navigation.navigate('AddTask'),
+          onPress: openAddTask,
         }}
       />
     );
@@ -132,7 +136,7 @@ export const TaskDashboard: React.FC<TaskDashboardProps> = ({ navigation }) => {
           TaskFlow
         </Text>
         <Pressable
-          onPress={() => navigation.navigate('Profile')}
+          onPress={openProfile}
           hitSlop={8}
           accessibilityLabel="Go to profile"
         >
@@ -182,7 +186,7 @@ export const TaskDashboard: React.FC<TaskDashboardProps> = ({ navigation }) => {
             bottom: insets.bottom + spacing.lg,
           },
         ]}
-        onPress={() => navigation.navigate('AddTask')}
+        onPress={openAddTask}
         accessibilityLabel="Add new task"
       >
         <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />

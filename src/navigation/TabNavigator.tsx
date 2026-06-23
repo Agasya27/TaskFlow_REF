@@ -7,7 +7,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useTheme } from '@theme/index';
 import { TaskDashboard } from '@screens/tasks/TaskDashboard';
-import { AddTaskScreen } from '@screens/tasks/AddTaskScreen';
 import { ProfileScreen } from '@screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
@@ -49,7 +48,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
         const onPress = () => {
           if (route.name === 'AddTab') {
-            navigation.navigate('AddTaskModal');
+            navigation.getParent()?.navigate('AddTaskModal' as never);
             return;
           }
           if (!isFocused) {
@@ -98,15 +97,14 @@ export const TabNavigator: React.FC = () => (
     <Tab.Screen name="Tasks" component={TaskStackNavigator} />
     <Tab.Screen
       name="AddTab"
-      component={View}
+      component={PlaceholderScreen}
       listeners={{ tabPress: (e) => e.preventDefault() }}
     />
     <Tab.Screen name="Profile" component={ProfileScreen} />
   </Tab.Navigator>
 );
 
-// Dummy — the AddTab press is intercepted
-function View() {
+function PlaceholderScreen() {
   return null;
 }
 
