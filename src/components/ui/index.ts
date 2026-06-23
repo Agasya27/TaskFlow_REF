@@ -6,3 +6,5 @@ export { Avatar } from './Avatar';
 export { Skeleton, TaskCardSkeleton } from './Skeleton';
 export { EmptyState } from './EmptyState';
 export { ToastProvider, useToast } from './Toast';
+export { ErrorBoundary } from './ErrorBoundary';
+export { OfflineBanner } from './OfflineBanner';

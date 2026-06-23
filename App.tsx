@@ -6,6 +6,8 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_7
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemeProvider } from '@theme/index';
 import { ToastProvider } from '@components/ui/Toast';
+import { ErrorBoundary } from '@components/ui/ErrorBoundary';
+import { OfflineBanner } from '@components/ui/OfflineBanner';
 import { AppNavigator } from '@navigation/AppNavigator';
 
 SplashScreen.preventAutoHideAsync();
@@ -30,10 +32,13 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRoot}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <ToastProvider>
-            <StatusBar style="dark" />
-            <AppNavigator />
-          </ToastProvider>
+          <ErrorBoundary>
+            <ToastProvider>
+              <OfflineBanner />
+              <StatusBar style="dark" />
+              <AppNavigator />
+            </ToastProvider>
+          </ErrorBoundary>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { format } from 'date-fns';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '@theme/index';
 import { Badge } from '@components/ui/Badge';
 import { Task } from '@services/taskService';
@@ -36,6 +37,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index, onToggle }) => 
     checkScale.value = withSpring(0.8, { damping: 10 }, () => {
       checkScale.value = withSpring(1, { damping: 10 });
     });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onToggle(task.id);
   };
 
