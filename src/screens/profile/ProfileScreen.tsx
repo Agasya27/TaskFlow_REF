@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -26,10 +26,14 @@ export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuthStore();
   const tasks = useTaskStore((s) => s.tasks);
-  const { enabled: notificationsOn, isHydrated, isUpdating, setEnabled } = useNotificationStore();
+  const { enabled: notificationsOn, isUpdating, setEnabled, hydrate } = useNotificationStore();
   const { show: showToast } = useToast();
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  useEffect(() => {
+    hydrate().catch(() => {});
+  }, [hydrate]);
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter((t) => t.completed).length;
@@ -140,7 +144,7 @@ export const ProfileScreen: React.FC = () => {
             <Switch
               value={notificationsOn}
               onValueChange={handleNotificationsToggle}
-              disabled={!isHydrated || isUpdating}
+              disabled={isUpdating}
               trackColor={{ false: colors.border, true: colors.primaryLight }}
               thumbColor={notificationsOn ? colors.primary : colors.textDisabled}
             />

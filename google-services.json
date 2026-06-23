@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "684498719028",
+    "project_id": "taskflow-c64eb",
+    "storage_bucket": "taskflow-c64eb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:684498719028:android:0d7c65c4603065c43a9561",
+        "android_client_info": {
+          "package_name": "com.agasya.taskflow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "684498719028-5nvf4a3kn1d9nnv16der0u3rvkds387p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.agasya.taskflow",
+            "certificate_hash": "7fb33e6f6ad50b1287300aeb586810f7dee25769"
+          }
+        },
+        {
+          "client_id": "684498719028-svj5uuuj8h64io8acgu505k9cb7979u7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-wkctpf_ARIJ7U2Qf4iITQwXx3fGVMcw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "684498719028-svj5uuuj8h64io8acgu505k9cb7979u7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "684498719028-rtgn1pnhbuf9odnvjhaivuncektk0rl2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "host.exp.Exponent"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

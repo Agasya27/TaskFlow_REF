@@ -1,5 +1,5 @@
 import { NativeModules, Platform } from 'react-native';
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
 export const DAILY_REMINDER_ID = 'taskflow-daily-reminder';
 
@@ -11,14 +11,34 @@ let deviceModule: DeviceModule | null | undefined;
 let notificationsAvailable: boolean | undefined;
 let handlerConfigured = false;
 
+function isExpoGo(): boolean {
+  return Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+}
+
+function isStandaloneBuild(): boolean {
+  return (
+    Constants.executionEnvironment === ExecutionEnvironment.Standalone ||
+    Constants.executionEnvironment === ExecutionEnvironment.Bare
+  );
+}
+
 function hasNotificationsNativeModule(): boolean {
   try {
     return Boolean(
-      NativeModules.ExpoPushTokenManager ?? NativeModules.ExpoNotifications,
+      NativeModules.ExpoPushTokenManager ??
+        NativeModules.ExpoNotifications ??
+        NativeModules.ExpoNotificationsModule,
     );
   } catch {
     return false;
   }
+}
+
+function canLoadNotificationsModule(): boolean {
+  if (Platform.OS === 'ios') return true;
+  if (Platform.OS === 'android' && isExpoGo()) return false;
+  if (Platform.OS === 'android' && isStandaloneBuild()) return true;
+  return hasNotificationsNativeModule();
 }
 
 function hasDeviceNativeModule(): boolean {
@@ -31,7 +51,7 @@ function hasDeviceNativeModule(): boolean {
 
 function loadNotifications(): NotificationsModule | null {
   if (notificationsModule !== undefined) return notificationsModule;
-  if (!hasNotificationsNativeModule()) {
+  if (!canLoadNotificationsModule()) {
     notificationsModule = null;
     return null;
   }
@@ -62,7 +82,11 @@ function loadNotifications(): NotificationsModule | null {
 
 function loadDevice(): DeviceModule | null {
   if (deviceModule !== undefined) return deviceModule;
-  if (!hasDeviceNativeModule()) {
+  const canLoad =
+    Platform.OS === 'ios' ||
+    isStandaloneBuild() ||
+    (Platform.OS === 'android' && !isExpoGo() && hasDeviceNativeModule());
+  if (!canLoad) {
     deviceModule = null;
     return null;
   }
@@ -78,11 +102,13 @@ function loadDevice(): DeviceModule | null {
 
 export function isNotificationsSupported(): boolean {
   try {
-    if (notificationsAvailable !== undefined) return notificationsAvailable;
-    notificationsAvailable = hasNotificationsNativeModule() && loadNotifications() !== null;
-    return notificationsAvailable;
+    if (notificationsAvailable === true) return true;
+    if (Platform.OS === 'android' && isExpoGo()) return false;
+
+    const loaded = loadNotifications() !== null;
+    if (loaded) notificationsAvailable = true;
+    return loaded;
   } catch {
-    notificationsAvailable = false;
     return false;
   }
 }
@@ -92,9 +118,9 @@ async function ensureAndroidChannel(): Promise<void> {
   if (!Notifications || Platform.OS !== 'android') return;
 
   try {
-    await Notifications.setNotificationChannelAsync('default', {
+    await Notifications.setNotificationChannelAsync('taskflow-default', {
       name: 'Task reminders',
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#6366F1',
     });
@@ -158,6 +184,7 @@ export async function scheduleDailyReminder(pendingCount: number): Promise<void>
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour: 9,
         minute: 0,
+        channelId: 'taskflow-default',
       },
     });
   } catch {

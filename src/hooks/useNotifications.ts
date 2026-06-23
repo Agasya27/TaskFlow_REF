@@ -19,9 +19,8 @@ export function useNotifications(): void {
   const tasks = useTaskStore((s) => s.tasks);
 
   useEffect(() => {
-    if (!supported) return;
     hydrate().catch(() => {});
-  }, [hydrate, supported]);
+  }, [hydrate]);
 
   useEffect(() => {
     if (!supported || !enabled) return;

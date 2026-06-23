@@ -36,6 +36,7 @@ module.exports = () => {
     {
       icon: './assets/android-icon-monochrome.png',
       color: '#6366F1',
+      defaultChannel: 'taskflow-default',
     },
   ]);
 
@@ -44,6 +45,14 @@ module.exports = () => {
     expo: {
       ...baseConfig.expo,
       scheme: Array.from(schemes),
+      android: {
+        ...baseConfig.expo.android,
+        googleServicesFile: './google-services.json',
+        permissions: [
+          ...(baseConfig.expo.android?.permissions ?? []),
+          'POST_NOTIFICATIONS',
+        ],
+      },
       plugins,
       extra: {
         ...baseConfig.expo.extra,

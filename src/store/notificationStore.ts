@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { create } from 'zustand';
 import { KEYS, getItem, setItem, removeItem } from '@utils/storage';
 import {
@@ -33,7 +34,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     const enabled = stored ?? false;
     set({ enabled, isHydrated: true });
 
-    if (!enabled || !isNotificationsSupported()) return;
+    if (!enabled) return;
+
+    if (!isNotificationsSupported()) return;
 
     const granted = await requestNotificationPermission();
     if (!granted) {
@@ -51,10 +54,15 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
     try {
       if (enabled) {
-        if (!isNotificationsSupported()) {
+        // Re-check at tap time — startup NativeModules probe can false-negative on APK.
+        const supported = isNotificationsSupported();
+        if (!supported) {
           return {
             ok: false,
-            message: 'Notifications need a newer app build. Run npm run build:apk and reinstall.',
+            message:
+              Platform.OS === 'ios'
+                ? 'Notifications need a dev client or standalone build on a physical iPhone (not Expo Go).'
+                : 'Notifications are unavailable in this build. Reinstall the latest standalone APK.',
           };
         }
 
@@ -62,19 +70,21 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         if (!granted) {
           return {
             ok: false,
-            message: 'Notification permission was denied. Enable it in system settings.',
+            message: 'Notification permission was denied. Enable notifications for TaskFlow in system settings.',
           };
         }
 
         const pushToken = await getExpoPushToken();
+        await scheduleDailyReminder(pendingCount);
+        await persistEnabled(true);
+        set({ enabled: true, pushToken });
+
         if (pushToken) {
           await setItem(KEYS.PUSH_TOKEN, pushToken);
         } else {
           await removeItem(KEYS.PUSH_TOKEN);
         }
-        await scheduleDailyReminder(pendingCount);
-        await persistEnabled(true);
-        set({ enabled: true, pushToken });
+
         return { ok: true };
       }
 
